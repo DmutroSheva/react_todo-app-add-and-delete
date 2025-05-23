@@ -1,63 +1,22 @@
 import React from 'react';
+import { Filter } from '../../utils/Filter';
 import classNames from 'classnames';
-import { ErrorType, Filter } from '../../App';
-import { Todo } from '../../types/Todo';
-import { deleteTodo } from '../../api/todos';
 
 type Props = {
   activeTodos: number;
   selectedFilter: string;
   setSelectedFilter: React.Dispatch<React.SetStateAction<Filter>>;
   completedTodos: number;
-  todos: Todo[];
-  setTodos: React.Dispatch<React.SetStateAction<Todo[]>>;
-  setCurrentError: React.Dispatch<React.SetStateAction<ErrorType | ''>>;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsDeleteAllPressed: React.Dispatch<React.SetStateAction<boolean>>;
+  onClearCompleted: () => Promise<void>;
 };
 
 export const Footer: React.FC<Props> = ({
-  selectedFilter,
   activeTodos,
+  selectedFilter,
   setSelectedFilter,
   completedTodos,
-  todos,
-  setTodos,
-  setCurrentError,
-  setIsLoading,
-  setIsDeleteAllPressed,
+  onClearCompleted,
 }) => {
-  const handleDeleteAllCompleted = () => {
-    const todos1 = todos.filter(todo => todo.completed);
-
-    setIsDeleteAllPressed(true);
-    setIsLoading(true);
-
-    Promise.allSettled(todos1.map(todo => deleteTodo(todo.id.toString())))
-      .then(results => {
-        const successfulIds: number[] = [];
-        let hasErrors = false;
-
-        results.forEach((result, index) => {
-          if (result.status === 'fulfilled') {
-            successfulIds.push(todos1[index].id);
-          } else {
-            hasErrors = true;
-          }
-        });
-
-        setTodos(prev => prev.filter(todo => !successfulIds.includes(todo.id)));
-
-        if (hasErrors) {
-          setCurrentError(ErrorType.UnableToDeleteTodo);
-        }
-      })
-      .finally(() => {
-        setIsLoading(false);
-        setIsDeleteAllPressed(false);
-      });
-  };
-
   return (
     <footer className="todoapp__footer" data-cy="Footer">
       <span className="todo-count" data-cy="TodosCounter">
@@ -65,15 +24,15 @@ export const Footer: React.FC<Props> = ({
       </span>
 
       <nav className="filter" data-cy="Filter">
-        {Object.values(Filter).map((filter: Filter, index) => {
+        {Object.values(Filter).map((filter: Filter) => {
           return (
             <a
-              href={`#/${filter}`}
-              key={index}
+              key={filter}
+              data-cy={`FilterLink${filter}`}
+              href={`#/${filter.toLocaleLowerCase()}`}
               className={classNames('filter__link', {
                 selected: selectedFilter === filter,
               })}
-              data-cy={`FilterLink${filter}`}
               onClick={() => setSelectedFilter(filter)}
             >
               {filter}
@@ -86,8 +45,8 @@ export const Footer: React.FC<Props> = ({
         type="button"
         className="todoapp__clear-completed"
         data-cy="ClearCompletedButton"
-        onClick={() => handleDeleteAllCompleted()}
         disabled={completedTodos === 0}
+        onClick={onClearCompleted}
       >
         Clear completed
       </button>

@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import { ErrorType } from '../../App';
+import { ErrorType } from '../../types/ErrorType';
 
 type Props = {
   currentError: string;
